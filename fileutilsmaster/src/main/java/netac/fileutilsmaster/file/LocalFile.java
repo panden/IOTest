@@ -1,47 +1,31 @@
-package netac.iotest.utils.file;
+package netac.fileutilsmaster.file;
 
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.support.v4.provider.DocumentFile;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * Created by siwei.zhao on 2016/6/29.
  */
-public class ExtrageFile extends FileCommon {
+public class LocalFile extends FileCommon {
 
-    protected DocumentFile mFile;
+    protected File mFile;
 
-    public ExtrageFile(String path) {
+    public LocalFile(String path) {
         super(path);
-        File file=new File(path);
-        mFile=DocumentFile.fromFile(file);
+        mFile=new File(path);
     }
 
-    public ExtrageFile(Uri uri){
-        super("");
-        path=getPathByUri(uri);
-        mFile=DocumentFile.fromSingleUri(CustomFile.getContext(), uri);
-    }
-
-    public ExtrageFile(File file){
+    public LocalFile(File file){
         super(file.getAbsolutePath());
-        mFile=DocumentFile.fromFile(file);
-    }
-
-    public ExtrageFile(DocumentFile file){
-        super("");
-        path=getPathByUri(file.getUri());
         mFile=file;
     }
-
-    private String getPathByUri(Uri uri){
-        return null;
-    }
-
 
     @Override
     public boolean delete() {
@@ -51,20 +35,20 @@ public class ExtrageFile extends FileCommon {
     @Override
     public List<FileCommon> listFiles() {
         List<FileCommon> files=new ArrayList<FileCommon>();
-        DocumentFile[] fs=mFile.listFiles();
+        File[] fs=mFile.listFiles();
         if(fs==null)return files;
-        for(DocumentFile file : fs)files.add(new ExtrageFile(file));
+        for(File file:fs)files.add(new LocalFile(file));
         return files;
     }
 
     @Override
     public List<FileCommon> listFiles(FileFilter filter) {
         List<FileCommon> files=new ArrayList<FileCommon>();
-        DocumentFile[] fs=mFile.listFiles();
+        File[] fs=mFile.listFiles();
         if(fs==null)return files;
-        for(DocumentFile file : fs){
-            FileCommon f=new ExtrageFile(file);
-            if(filter.accept(f))files.add(new ExtrageFile(file));
+        for(File file:fs){
+            LocalFile f=new LocalFile(file);
+            if(filter.accept(f))files.add(f);
         }
         return files;
     }
@@ -76,12 +60,13 @@ public class ExtrageFile extends FileCommon {
 
     @Override
     public String getAbsultPath() {
-        return path;
+        return mFile.getAbsolutePath();
     }
 
     @Override
     public boolean deleteExists() {
-        return mFile.delete();
+        mFile.deleteOnExit();
+        return true;
     }
 
     @Override
@@ -106,7 +91,7 @@ public class ExtrageFile extends FileCommon {
 
     @Override
     public boolean mkdirs() {
-        return false;
+        return mFile.mkdirs();
     }
 
     @Override
@@ -121,12 +106,13 @@ public class ExtrageFile extends FileCommon {
 
     @Override
     public boolean createNewFile() {
-        DocumentFile parent=mFile.getParentFile();
-        if(parent.exists()){
-            mFile=parent.createFile("*/*", mFile.getName());
+        try {
+            mFile.createNewFile();
             return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
     @Override
@@ -136,16 +122,33 @@ public class ExtrageFile extends FileCommon {
 
     @Override
     public String getParent() {
-        return getPathByUri(mFile.getParentFile().getUri());
+        return mFile.getParent();
     }
 
     @Override
     public FileCommon getParentFile() {
-        return new ExtrageFile(mFile.getParentFile());
+        return new LocalFile(mFile.getParentFile());
     }
 
     @Override
     public Bitmap getFileIco() {
         return null;
+    }
+
+    @Override
+    public boolean hasChildFile(String name) {
+        String[] files=mFile.list();
+        if(files==null || files.length==0)return false;
+        return Arrays.asList(files).contains(name);
+    }
+
+    @Override
+    public FileInputStream getFIS() throws IOException {
+        return new FileInputStream(mFile);
+    }
+
+    @Override
+    public DocumentFile getFile() {
+        return DocumentFile.fromFile(mFile);
     }
 }

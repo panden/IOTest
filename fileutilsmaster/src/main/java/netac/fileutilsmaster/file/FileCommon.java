@@ -1,7 +1,12 @@
-package netac.iotest.utils.file;
+package netac.fileutilsmaster.file;
 
+import android.content.ContentResolver;
 import android.graphics.Bitmap;
+import android.support.v4.provider.DocumentFile;
+import android.webkit.MimeTypeMap;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -9,7 +14,12 @@ import java.util.List;
  */
 public abstract class FileCommon {
 
+    /**目录mimetype*/
+    public static final String DIRECTORY_MIMETYPE ="vnd.android.document/directory";
+
     protected String path;
+
+    protected ContentResolver mContentResolver=FileFactory.getInstance().getContext().getContentResolver();
 
     public FileCommon(String path){
         this.path=path;
@@ -51,8 +61,24 @@ public abstract class FileCommon {
 
     public abstract Bitmap getFileIco();
 
+    public abstract boolean hasChildFile(String name);
+
+    /**获取文件流*/
+    public abstract FileInputStream getFIS() throws IOException;
+
+    public abstract DocumentFile getFile();
+
+    /**获取文件mimeType*/
+    public String getMimeType(){
+        if(isDirectory())return DIRECTORY_MIMETYPE;
+        else return MimeTypeMap.getSingleton().getExtensionFromMimeType(MimeTypeMap.getFileExtensionFromUrl(getName()));
+    }
+
     public interface FileFilter{
 
         boolean accept(FileCommon file);
     }
+
+
+
 }

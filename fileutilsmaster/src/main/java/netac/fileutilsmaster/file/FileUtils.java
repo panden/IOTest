@@ -1,6 +1,4 @@
-package netac.iotest.utils.file;
-
-import android.content.Context;
+package netac.fileutilsmaster.file;
 
 /**
  * Created by siwei.zhao on 2016/6/29.

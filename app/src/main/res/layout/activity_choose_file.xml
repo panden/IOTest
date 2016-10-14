@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.andexert.library.RippleView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:rv_centered="true"
+    android:orientation="vertical"
     tools:context="netac.iotest.ChooseFileActivity">
 
     <LinearLayout
@@ -41,6 +40,6 @@
 
     </LinearLayout>
 
-</com.andexert.library.RippleView>
+</LinearLayout>
 
 

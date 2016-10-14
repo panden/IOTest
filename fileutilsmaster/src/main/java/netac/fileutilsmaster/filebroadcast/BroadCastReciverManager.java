@@ -1,4 +1,4 @@
-package netac.iotest.utils.filebroadcast;
+package netac.fileutilsmaster.filebroadcast;
 
 import android.app.Application;
 import android.content.BroadcastReceiver;
@@ -70,6 +70,8 @@ public class BroadCastReciverManager{
             if(b.hasRegister())b.unRegisterBroadCastReciver();
         }
     }
+
+
 
     /**
      * <pre>

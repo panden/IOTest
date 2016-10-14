@@ -1,8 +1,10 @@
-package netac.iotest.utils.filebroadcast;
+package netac.fileutilsmaster.filebroadcast;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+
+import netac.fileutilsmaster.file.FileFactory;
 
 /**
  * Created by siwei.zhao on 2016/6/30.
@@ -10,6 +12,8 @@ import android.content.IntentFilter;
 public class DeviceBroadcast extends BroadCastReciverManager.BroadCastReciverCommon {
 
     public static final String ACTION_TEST="action_test";
+
+
     @Override
     public IntentFilter getRegisterIntentFilter() {
         IntentFilter filter=new IntentFilter();
@@ -17,6 +21,7 @@ public class DeviceBroadcast extends BroadCastReciverManager.BroadCastReciverCom
         filter.addAction(Intent.ACTION_MEDIA_MOUNTED);
         filter.addAction(Intent.ACTION_MEDIA_REMOVED);
         filter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+        filter.addAction(Intent.ACTION_MEDIA_CHECKING);
         filter.addDataScheme("file");
         return filter;
     }
@@ -36,6 +41,9 @@ public class DeviceBroadcast extends BroadCastReciverManager.BroadCastReciverCom
             //USB设备移除
 
         }else if(action.equals(Intent.ACTION_MEDIA_MOUNTED)){
+
+            //判断是usb设备还是存储设备被挂载了
+            FileFactory.getInstance().getFileWrapper();
 
         }else if(action.equals(Intent.ACTION_MEDIA_REMOVED)){
 

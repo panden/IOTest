@@ -1,18 +1,16 @@
-package netac.iotest.utils.file;
+package netac.fileutilsmaster.file;
 
-import android.app.Application;
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.Build;
+import android.support.v4.provider.DocumentFile;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 
 /**
  * Created by siwei.zhao on 2016/6/29.
  */
 public class CustomFile extends FileCommon{
-
-    private static Context sContext;
 
     protected FileCommon mFile;
 
@@ -111,55 +109,23 @@ public class CustomFile extends FileCommon{
         return null;
     }
 
-    public static void initCustomFile(Application app){
-        sContext=app.getApplicationContext();
+    @Override
+    public boolean hasChildFile(String name) {
+        return mFile.hasChildFile(name);
     }
 
-    public static Context getContext(){
-        if(sContext==null)throw  new IllegalStateException("CustomFile not init, Please init CustomFile in Application.");
-        return sContext;
+    @Override
+    public FileInputStream getFIS() throws IOException {
+        return mFile.getFIS();
     }
 
+    @Override
+    public DocumentFile getFile() {
+        return mFile.getFile();
+    }
 
     protected FileCommon createFile(String path){
-        FileCommon fileCommon=null;
-        if(isExtraDevice(path) && isKitKatMore()){
-            //是外置存储，而且当前在Android4.4之上
-            fileCommon=new ExtrageFile(path);
-        }else{
-            //内置存储，或者外置存储（Android版本在4.4之下）
-            fileCommon=new LocalFile(path);
-        }
-        return fileCommon;
-    }
-
-    //是否是外置存储设备
-    private boolean isExtraDevice(String path){
-        if(path.startsWith(System.getenv("ANDROID_STORAGE"))){//外置存储设备
-            return true;
-        }else{//内置存储设备
-            return false;
-        }
-    }
-
-    //判断当前文件路径是否为USBOTG设备
-    private boolean isUsbOTG(String path){
-        return false;
-    }
-
-    /**判断当前版本是否在Android4.4之上*/
-    private boolean isKitKatMore(){
-        return Build.VERSION.SDK_INT>=19;
-    }
-
-    /**获取内置存储路径*/
-    public static String getExternalStorage(){
-        return System.getenv("EXTERNAL_STORAGE");
-    }
-
-    /**获取外置存储卡路径*/
-    public static String getSecondaryStorage(){
-        return System.getenv("SECONDARY_STORAGE");
+        return FileFactory.getInstance().createFile(path);
     }
 
 }

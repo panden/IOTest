@@ -1,11 +1,10 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
 
     defaultConfig {
-        applicationId "netac.iotest"
         minSdkVersion 12
         targetSdkVersion 23
         versionCode 1
@@ -22,8 +21,5 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     testCompile 'junit:junit:4.12'
-    compile project(path: ':fileutilsmaster')
-    compile 'com.android.support:design:23.4.0'
-    compile project(':fileutilsmaster')
     compile 'com.android.support:appcompat-v7:23.4.0'
 }
