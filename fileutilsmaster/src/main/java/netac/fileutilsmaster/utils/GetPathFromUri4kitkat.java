@@ -7,7 +7,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 
@@ -126,7 +125,7 @@ public class GetPathFromUri4kitkat {
                     path=System.getenv("EMULATED_STORAGE_TARGET")+"/"+name;
                 }else{
                     //外部存储
-                    path=Environment.getExternalStorageDirectory().getParentFile().getAbsolutePath()+"/"+name;
+                    path=System.getenv("ANDROID_STORAGE")+"/"+name;
                 }
 
             }
@@ -135,7 +134,7 @@ public class GetPathFromUri4kitkat {
         } finally {
             if(cursor!=null)cursor.close();
         }
-
+        Logger.d("getDataColumUsingTree path=%s", path);
         return path;
     }
 

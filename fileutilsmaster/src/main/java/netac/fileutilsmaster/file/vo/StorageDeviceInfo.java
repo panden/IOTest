@@ -11,6 +11,7 @@ public class StorageDeviceInfo {
     private long freeSpace;//可用空间
     private long usedSpace;//已用空间
     private StorageDeviceType deviceType;//设备类型
+    private String storageId;//存储设备id
 
     /**存储设备类型*/
     public enum StorageDeviceType {
@@ -68,5 +69,11 @@ public class StorageDeviceInfo {
         this.deviceType = deviceType;
     }
 
+    public String getStorageId() {
+        return storageId;
+    }
 
+    public void setStorageId(String storageId) {
+        this.storageId = storageId;
+    }
 }

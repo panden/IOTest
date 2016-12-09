@@ -14,6 +14,6 @@ public class FileMasterApplication extends Application{
     public void onCreate() {
         super.onCreate();
         MasterUtils.initMaster(this);
-        MasterUtils.debug(true, "FileMasterLib");
+        MasterUtils.debug(true);
     }
 }

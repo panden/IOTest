@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:padding="10dp">
+
+    <TextView
+        android:id="@+id/operation_title_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="复制 任务失败"
+        android:textSize="20sp"
+        android:textColor="#000"/>
+
+    <TextView
+        android:id="@+id/operation_name_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:layout_margin="5dp"
+        android:ellipsize="end"
+        android:textColor="#000"
+        android:text="名称：sound.mp3"/>
+
+    <TextView
+        android:id="@+id/operation_count_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:layout_margin="5dp"
+        android:ellipsize="end"
+        android:textColor="#000"
+        android:text="总共：419项，总大小：2.95G"/>
+
+    <TextView
+        android:id="@+id/from_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:layout_margin="5dp"
+        android:ellipsize="end"
+        android:textColor="#000"
+        android:text="从：/storage/0055-0229/音乐"/>
+
+    <TextView
+        android:id="@+id/to_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:layout_margin="5dp"
+        android:ellipsize="end"
+        android:textColor="#000"
+        android:text="到：/storage/0055-0229/Music"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp">
+
+        <TextView
+            android:id="@+id/task_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/task_progress_tv"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="#000"
+            android:text="当前进度：sound.mp3"/>
+
+        <TextView
+            android:id="@+id/task_progress_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:textColor="#000"
+            android:text="56%"/>
+    </RelativeLayout>
+
+
+    <ProgressBar
+        android:id="@+id/task_pb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="2dp"
+        style="@android:style/Widget.Holo.ProgressBar.Horizontal"
+        android:max="100"
+        android:progress="56"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp">
+
+        <TextView
+            android:id="@+id/operation_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/operation_progress_tv"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="#000"
+            android:text="总进度：213/419"/>
+
+        <TextView
+            android:id="@+id/operation_progress_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:textColor="#000"
+            android:text="62%"/>
+    </RelativeLayout>
+
+
+    <ProgressBar
+        android:id="@+id/operation_pb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="2dp"
+        style="@android:style/Widget.Holo.ProgressBar.Horizontal"
+        android:max="100"
+        android:progress="62"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp">
+
+        <TextView
+            android:id="@+id/remaining_time_tv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/speed_tv"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="#000"
+            android:text="剩余时间：00:00:19"/>
+
+        <TextView
+            android:id="@+id/speed_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:textColor="#000"
+            android:text="9.19M/s"/>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/task_error_ll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_margin="5dp">
+
+        <ImageView
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:scaleType="fitCenter"
+            android:layout_marginRight="5dp"
+            android:src="@drawable/warning"/>
+
+        <TextView
+            android:id="@+id/task_error_tv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textColor="#000"
+            android:ellipsize="end"
+            android:text="复制文件 test.mp4失败"/>
+    </LinearLayout>
+
+
+</LinearLayout>

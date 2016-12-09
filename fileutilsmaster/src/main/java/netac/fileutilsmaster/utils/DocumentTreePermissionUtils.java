@@ -19,10 +19,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
+import netac.fileutilsmaster.activity.DocumentPermissionActivity;
 import netac.fileutilsmaster.file.FileFactory;
 import netac.fileutilsmaster.file.serializable.DocumentUriSerializable;
 import netac.fileutilsmaster.file.vo.StorageDeviceInfo;
+import netac.fileutilsmaster.file.wrapper.StorageDeviceWrapper;
 
 /**
  * Created by siwei.zhao on 2016/9/18.
@@ -32,11 +36,28 @@ public class DocumentTreePermissionUtils {
 
     private static DocumentTreePermissionUtils sUtils;
 
-    private DocumentTreePermissionUtils(){};
+    private Map<StorageDeviceInfo.StorageDeviceType, DocumentFile> mDocumentPermissionMaps;
+
+
+
+    private DocumentTreePermissionUtils(){
+        mDocumentPermissionMaps=new HashMap<>();
+    };
 
     public static DocumentTreePermissionUtils getInstance(){
         if(sUtils==null)sUtils=new DocumentTreePermissionUtils();
         return sUtils;
+    }
+
+
+    /**获取document tree的访问权限,会弹出指导页面
+     * Android 4.4 API 19
+     * */
+    public void getDocumentTreePermission(Activity activity, StorageDeviceInfo.StorageDeviceType type){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.KITKAT || hasGrantPermission(type))return;
+        Intent intent=new Intent(activity, DocumentPermissionActivity.class);
+        intent.putExtra(DocumentPermissionActivity.EXTRAL_STORAGE_TYPE, type.ordinal());
+        activity.startActivity(intent);
     }
 
     /**获取document tree的访问权限
@@ -53,7 +74,6 @@ public class DocumentTreePermissionUtils {
                 intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
                 intent.setType("*/*");
             }
-
         }
         activity.startActivityForResult(intent, requestCode);
     }
@@ -70,20 +90,27 @@ public class DocumentTreePermissionUtils {
             context.getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 
             String path=GetPathFromUri4kitkat.getPath(context, uri);
-            Logger.i("reciver uri path="+path);
-            type = FileFactory.getInstance().getFileWrapper().getPathStorageType(path);
-            Logger.i("uri type="+type);
+            Logger.d("reciver uri path="+path);
+            StorageDeviceWrapper wrapper=FileFactory.getInstance().getFileWrapper();
+            type = wrapper.getPathStorageType(path);
+            StorageDeviceInfo info=wrapper.getStorageDevice(type);
+            if(info==null)return type;
+            Logger.d("uri type="+type);
             //判断uri是外置sd卡还是usb存储设备
-            initRootDocumentFile(type, uri);
-            saveRootFileUri(type, uri, context);
-
-            //test(context, uri);
-//            testContent(context, uri);
-//            testProvider(uri, context);
+            saveRootFileUri(type, info.getStorageId(), uri, context);
+            mDocumentPermissionMaps.put(type, getRootFileByUri(uri));
         } catch (Exception e) {
             e.printStackTrace();
         }
         return type;
+    }
+
+    /**根据授权uri去获取对应的DocumentFile*/
+    private DocumentFile getRootFileByUri(Uri uri){
+        DocumentFile documentFile=null;
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP)documentFile=DocumentFile.fromTreeUri(FileFactory.getInstance().getContext(), uri);
+        else if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.KITKAT)documentFile=DocumentFile.fromSingleUri(FileFactory.getInstance().getContext(), uri);
+        return documentFile;
     }
 
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -117,30 +144,24 @@ public class DocumentTreePermissionUtils {
         //测试创建文件夹
         Uri uri1=DocumentsContract.buildTreeDocumentUri(uri.getAuthority(), DocumentsContract.getTreeDocumentId(uri));
         DocumentFile file = DocumentFile.fromTreeUri(context, uri1);
-        Logger.i("uri=%s  uri1=%s", uri.toString(), uri1.toString());
+        Logger.d("uri=%s  uri1=%s", uri.toString(), uri1.toString());
         file.createFile("vnd.android.document/directory", "testDir2");
     }
 
-
-    //初始化跟目录文件
-    private void initRootDocumentFile(StorageDeviceInfo.StorageDeviceType type, Uri documentFile){
-        FileFactory.getInstance().getFileWrapper().setStorageRootDocumentFile(type, documentFile);
-    }
-
     //root uri序列化
-    private void saveRootFileUri(StorageDeviceInfo.StorageDeviceType type, Uri uri, Context context){
+    private void saveRootFileUri(StorageDeviceInfo.StorageDeviceType type, String storageId, Uri uri, Context context){
         //uri序列化存起来，下次使用
         ObjectOutputStream oos=null;
         try {
             //document_tree_uri_permission_usb_device_data.oos
-            String filePath= getPermissionSavePath(type, context);
+            String filePath= getPermissionSavePath(type, storageId, context);
             File dataFile=new File(filePath);
             if(!dataFile.getParentFile().exists())dataFile.getParentFile().mkdirs();
             if(dataFile.exists())dataFile.delete();
             dataFile.createNewFile();
             oos=new ObjectOutputStream(new FileOutputStream(dataFile));
             oos.writeObject(new DocumentUriSerializable(uri, true));
-            Logger.i("write document permission uri success");
+            Logger.d("write document permission uri success");
         } catch (IOException e) {
             Logger.e("write document permission uri error e=%s", e.getMessage());
             e.printStackTrace();
@@ -157,42 +178,43 @@ public class DocumentTreePermissionUtils {
     }
 
     //获取权限存储的地址
-    private String getPermissionSavePath(StorageDeviceInfo.StorageDeviceType type, Context context){
+    private String getPermissionSavePath(StorageDeviceInfo.StorageDeviceType type, String storageId, Context context){
 
         String filePath=context.getApplicationContext().getFilesDir().getAbsolutePath()+"/permission";
         switch (type){
             case ExtrageDevice:
-                filePath+="/document_tree_uri_extrage.oos";
+                filePath+="/document_tree_uri_extrage_"+storageId+".oos";
                 break;
             case SecondExtrageDevice:
-                filePath+="/document_tree_uri_second_extrage.oos";
+                filePath+="/document_tree_uri_second_extrage_"+storageId+".oos";
                 break;
             case UsbDevice:
-                filePath+="/document_tree_uri_usb_device.oos";
+                filePath+="/document_tree_uri_usb_device_"+storageId+".oos";
                 break;
             default:
-                filePath=null;
+                filePath+="/unknow_"+storageId+".oos";
                 break;
         }
-        Logger.i("get %s save document permission path=%s;", type, filePath);
+        Logger.d("get %s save document permission path=%s;", type, filePath);
         return filePath;
     }
 
-    /**读取uri权限*/
+    /**读取uri权限,如果没有对应的权限记录，则返回null*/
     @SuppressLint("NewApi")
-    private Uri readRootFileUri(StorageDeviceInfo.StorageDeviceType type, Context context){
+    private Uri readRootFileUri(StorageDeviceInfo.StorageDeviceType type, String storageId, Context context){
         Uri uri=null;
         ObjectInputStream ois=null;
         try {
-            ois=new ObjectInputStream(new FileInputStream(getPermissionSavePath(type, context)));
+            File saveFile=new File(getPermissionSavePath(type, storageId, context));
+            if(!saveFile.exists())return null;
+            ois=new ObjectInputStream(new FileInputStream(saveFile));
             DocumentUriSerializable documentUriSerializable= (DocumentUriSerializable) ois.readObject();
-            System.out.println("sdk init="+Build.VERSION.SDK_INT);
             if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP){
                 uri=DocumentsContract.buildTreeDocumentUri(documentUriSerializable.getAuthority(), documentUriSerializable.getDocumentId());
             }else if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.KITKAT){
                 uri=DocumentsContract.buildDocumentUri(documentUriSerializable.getAuthority(), documentUriSerializable.getDocumentId());
             }
-            Logger.i("read document uri permission success.");
+            Logger.d("read document uri permission success.");
         } catch (Exception e) {
             Logger.e("read document uri permission error. exception="+e.getMessage());
             e.printStackTrace();
@@ -207,10 +229,57 @@ public class DocumentTreePermissionUtils {
     }
 
     /**获取root document file,如果没有持久化权限或者没申请权限，则会返回null。需要重新申请权限*/
-    public DocumentFile getRootFileUri(StorageDeviceInfo.StorageDeviceType type, Context context){
+    private DocumentFile getRootFileUri(StorageDeviceInfo.StorageDeviceType type, String storageId, Context context){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.KITKAT)return null;
         DocumentFile documentFile=null;
-        Uri uri=readRootFileUri(type, context);
+        Uri uri=readRootFileUri(type, storageId, context);
         if(uri!=null)documentFile=DocumentFile.fromTreeUri(context, uri);
         return documentFile;
+    }
+
+    /**初始化以获取到的权限信息，当存储设备变化之后，需要更新对应的权限信息
+     * @param devices 已挂载的存储设备类型
+     * @param context context
+     * */
+    public void initDocumentPermission(StorageDeviceInfo[] devices, Context context){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.KITKAT)return;
+        for(StorageDeviceInfo device : devices){
+            DocumentFile documentFile=getRootFileUri(device.getDeviceType(), device.getStorageId(), context);
+            Logger.d("initDocumentPermission type=%s hasPermission=%s", String.valueOf(device.getDeviceType()), String.valueOf(documentFile!=null));
+            if(documentFile!=null){
+                mDocumentPermissionMaps.put(device.getDeviceType(), documentFile);
+            }
+        }
+    }
+
+    /**获取指定存储设备的根DocumentFile，如果为获取到权限，则会返回null*/
+    public DocumentFile getStorageRootDocumentFile(StorageDeviceInfo.StorageDeviceType type){
+        return mDocumentPermissionMaps.get(type);
+    }
+
+    /**指定的存储设备是否已获取到权限*/
+    private boolean hasGrantPermission(StorageDeviceInfo.StorageDeviceType type){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.KITKAT)return true;
+        if(type== StorageDeviceInfo.StorageDeviceType.ExtrageDevice)return true;
+        return mDocumentPermissionMaps.containsKey(type);
+    }
+
+    /**检查操作的路径是否以获取权限*/
+    private StorageDeviceInfo.StorageDeviceType getStorageType(String path){
+        StorageDeviceInfo.StorageDeviceType type= FileFactory.getInstance().getFileWrapper().getPathStorageType(path);
+        return type;
+    }
+
+    /**检查所给出的路径是不是都已获取权限*/
+    public boolean checkPathPermission(Activity context, String... paths){
+        for(String path : paths){
+            StorageDeviceInfo.StorageDeviceType fromType=getStorageType(path);
+            DocumentTreePermissionUtils utils=DocumentTreePermissionUtils.getInstance();
+            if(!utils.hasGrantPermission(fromType)){
+                utils.getDocumentTreePermission(context, fromType);
+                return false;
+            }
+        }
+        return true;
     }
 }

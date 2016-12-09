@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.support.v4.provider.DocumentFile;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -40,8 +42,8 @@ public class CustomFile extends FileCommon{
     }
 
     @Override
-    public String getAbsultPath() {
-        return mFile.getAbsultPath();
+    public String getAbsolutePath() {
+        return mFile.getAbsolutePath();
     }
 
     @Override
@@ -95,6 +97,16 @@ public class CustomFile extends FileCommon{
     }
 
     @Override
+    public boolean renameTo(String newName) {
+        return mFile.renameTo(newName);
+    }
+
+    @Override
+    public boolean isRootFile() {
+        return mFile.isRootFile();
+    }
+
+    @Override
     public String getParent() {
         return mFile.getParent();
     }
@@ -115,8 +127,18 @@ public class CustomFile extends FileCommon{
     }
 
     @Override
-    public FileInputStream getFIS() throws IOException {
-        return mFile.getFIS();
+    public FileCommon getChildFile(String name) {
+        return mFile.getChildFile(name);
+    }
+
+    @Override
+    public FileInputStream getFileInputStream() throws FileNotFoundException, IOException {
+        return mFile.getFileInputStream();
+    }
+
+    @Override
+    public FileOutputStream getFileOutputStream() throws FileNotFoundException, IOException {
+        return mFile.getFileOutputStream();
     }
 
     @Override

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:CircleIndicator="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal">
+
+    <android.support.v4.view.ViewPager
+        android:id="@+id/vp"
+        android:layout_width="216dp"
+        android:layout_height="384dp"
+        android:layout_gravity="center_horizontal"/>
+
+    <netac.fileutilsmaster.views.CircleIndicator
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:layout_gravity="bottom"
+        android:layout_centerVertical="true"
+        android:id="@+id/indicator"
+        CircleIndicator:ci_background="#FFC800"
+        CircleIndicator:ci_selected_background="#EA6D00"
+        CircleIndicator:ci_mode="outside"
+        CircleIndicator:ci_gravity="center"
+        CircleIndicator:ci_radius="5dp"
+        CircleIndicator:ci_margin="3dp"
+        />
+</FrameLayout>

@@ -6,17 +6,14 @@ import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.StatFs;
 import android.os.storage.StorageManager;
+import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 import android.text.TextUtils;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,11 +24,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import netac.fileutilsmaster.file.FileFactory;
 import netac.fileutilsmaster.file.vo.StorageDeviceInfo;
 import netac.fileutilsmaster.filebroadcast.BroadCastReciverManager;
 import netac.fileutilsmaster.filebroadcast.DeviceBroadcast;
+import netac.fileutilsmaster.utils.DocumentTreePermissionUtils;
 import netac.fileutilsmaster.utils.Logger;
+
+import static java.lang.System.getenv;
 
 /**
  * Created by siwei.zhao on 2016/9/14.
@@ -53,6 +52,8 @@ public class StorageDeviceWrapper {
         manager.getBroadCastReciver(DeviceBroadcast.class).registerBroadCastListener(mBroadCastCallBack);
     }
 
+
+    /**初始化已挂在的所有存储设备的信息,以及对应的权限信息*/
     private void initStorageDeviceData(Context context){
         mStorageDeviceInfoMap.clear();
         //初始化手机存储信息
@@ -61,6 +62,11 @@ public class StorageDeviceWrapper {
         initExtrageSecond(context);
         //初始化usb存储设备
         initExtrageUsb(context);
+        //初始化存储设备信息
+        initStorageInfo(context);
+
+        //初始化权限信息
+        initDocumentTreeUriPermission(context);
     }
 
     private void initExtrage(Context context){
@@ -69,7 +75,7 @@ public class StorageDeviceWrapper {
         extrage.setDeviceType(StorageDeviceInfo.StorageDeviceType.ExtrageDevice);
         extrage.setRootPath(getStoragePath12(context, false).get(0));
         getSpaceInfo(extrage.getRootPath(), extrage.getCapacity(), extrage.getUsedSpace(), extrage.getFreeSpace());
-        System.out.println("extrage="+extrage.getRootPath());
+        Logger.d("extrage="+extrage.getRootPath());
         mStorageDeviceInfoMap.put(StorageDeviceInfo.StorageDeviceType.ExtrageDevice, extrage);
     }
 
@@ -81,7 +87,7 @@ public class StorageDeviceWrapper {
             extrageSecond.setDeviceType(StorageDeviceInfo.StorageDeviceType.SecondExtrageDevice);
             extrageSecond.setRootPath(secondExtragePath);
             getSpaceInfo(extrageSecond.getRootPath(), extrageSecond.getCapacity(), extrageSecond.getUsedSpace(), extrageSecond.getFreeSpace());
-            System.out.println("extrageSecond="+extrageSecond.getRootPath());
+            Logger.d("extrageSecond="+extrageSecond.getRootPath());
             mStorageDeviceInfoMap.put(StorageDeviceInfo.StorageDeviceType.SecondExtrageDevice, extrageSecond);
         }
     }
@@ -94,9 +100,58 @@ public class StorageDeviceWrapper {
             extrageUsb.setDeviceType(StorageDeviceInfo.StorageDeviceType.UsbDevice);
             extrageUsb.setRootPath(usbDevicePath);
             getSpaceInfo(extrageUsb.getRootPath(), extrageUsb.getCapacity(), extrageUsb.getUsedSpace(), extrageUsb.getFreeSpace());
-            System.out.println("extrageUsb="+extrageUsb.getRootPath());
+            Logger.d("extrageUsb="+extrageUsb.getRootPath());
             mStorageDeviceInfoMap.put(StorageDeviceInfo.StorageDeviceType.UsbDevice, extrageUsb);
         }
+    }
+
+    //初始化存储设备信息,storageid
+    private void initStorageInfo(Context context){
+        try {
+            Class storageVolumeClazz = Class.forName("android.os.storage.StorageVolume");
+            StorageManager storageManager= (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+            Method getVolumeList=storageManager.getClass().getMethod("getVolumeList");
+            Method isPrimary=storageVolumeClazz.getMethod("isPrimary");
+            Method isEmulated=storageVolumeClazz.getMethod("isEmulated");
+            Method getStorageId=storageVolumeClazz.getMethod("getStorageId");
+            Method getPathFile=storageVolumeClazz.getMethod("getPathFile");
+            Object result = getVolumeList.invoke(storageManager);
+            final int length = Array.getLength(result);
+            for (int i = 0; i < length; i++) {
+                Object storageVolumeElement = Array.get(result, i);
+                int mStorageId= (int) getStorageId.invoke(storageVolumeElement);
+                File file= (File) getPathFile.invoke(storageVolumeElement);
+                StorageDeviceInfo.StorageDeviceType type=getPathStorageType(file.getAbsolutePath());
+                Logger.d("path=%s storageid=%s", file.getAbsolutePath(), String.valueOf(mStorageId));
+                if(type!= StorageDeviceInfo.StorageDeviceType.UnKnow){
+                    mStorageDeviceInfoMap.get(type).setStorageId(String.valueOf(mStorageId));
+                    Logger.d("path=%s type=%s storageid=%s", file.getAbsolutePath(), String.valueOf(type), String.valueOf(mStorageId));
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**初始化权限,19以上才会执行该方法*/
+    private void  initDocumentTreeUriPermission(Context context){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.KITKAT)return;
+        StorageDeviceInfo[] deviceInfos=new StorageDeviceInfo[mStorageDeviceInfoMap.size()];
+        Iterator iterator=mStorageDeviceInfoMap.values().iterator();
+        int position=0;
+        while(iterator.hasNext()){
+            deviceInfos[position]= (StorageDeviceInfo) iterator.next();
+            position++;
+        }
+        //更新以获取的权限信息
+        DocumentTreePermissionUtils.getInstance().initDocumentPermission(deviceInfos, context);
     }
 
     BroadCastReciverManager.BroadCastCallBack mBroadCastCallBack=new BroadCastReciverManager.BroadCastCallBack() {
@@ -109,7 +164,7 @@ public class StorageDeviceWrapper {
             if(Intent.ACTION_MEDIA_MOUNTED.equals(action)){//存储设备挂载
                 String path=intent.getData().getPath().replace("file://", "");
 
-                //重新初始化磁盘信息
+                //重新初始化磁盘信息,以及对应的权限信息
                 initStorageDeviceData(context);
                 StorageDeviceInfo.StorageDeviceType type= StorageDeviceInfo.StorageDeviceType.UnKnow;
                 String secondExtrage=getSecondExtragePath(context);
@@ -196,7 +251,7 @@ public class StorageDeviceWrapper {
     }
 
     /**获取指定设备的存储信息*/
-    public StorageDeviceInfo getStorageDevice(StorageDeviceInfo.StorageDeviceType type){
+    public @Nullable StorageDeviceInfo getStorageDevice(StorageDeviceInfo.StorageDeviceType type){
         return mStorageDeviceInfoMap.get(type);
     }
 
@@ -204,7 +259,7 @@ public class StorageDeviceWrapper {
     private String getSecondExtragePath(Context context){
         String secondExtragePath=null;
         if(Build.VERSION.SDK_INT<23){
-            secondExtragePath=System.getenv("SECONDARY_STORAGE");
+            secondExtragePath= System.getenv("SECONDARY_STORAGE");
         }else{
             secondExtragePath=getStoragePath23(context, false);
         }
@@ -216,15 +271,15 @@ public class StorageDeviceWrapper {
         String usbPath="";
         if(Build.VERSION.SDK_INT>=23){//Android 6.0
             usbPath=getStoragePath23(context, true);
-        }else{
+        }else{//Android 6.0以下
             if(Build.VERSION.SDK_INT<12)return usbPath;//Android 3.1以上
-            String extrageSecondPath = System.getenv("SECONDARY_STORAGE");
+            String extrageSecondPath = getenv("SECONDARY_STORAGE");
             String extragePath= getStoragePath12(context, false).get(0);
             List<String> mountPaths=getStoragePath12(context, true);
             for(String p: mountPaths){
-                if(!p.equals(extragePath) && !p.equals(extrageSecondPath) && !p.startsWith(System.getenv("EMULATED_STORAGE_TARGET"))){
+                if(!p.equals(extragePath) && !p.equals(extrageSecondPath) && !p.startsWith(getenv("EMULATED_STORAGE_TARGET"))){
                     usbPath=p;
-                    System.out.println("usb path="+p);
+                    Logger.d("getUsbDevicePath usb path="+p);
                     return usbPath;
                 }
             }
@@ -241,7 +296,7 @@ public class StorageDeviceWrapper {
             UsbDevice device=devices.iterator().next();
             for(int i=0; i<device.getInterfaceCount(); i++){
                 UsbInterface usbInterface=device.getInterface(i);
-                System.out.println("getInterfaceClass="+device.getDeviceClass());
+                Logger.d("getInterfaceClass="+device.getDeviceClass());
                 if(usbInterface.getInterfaceClass() == UsbConstants.USB_CLASS_MASS_STORAGE){
                     return true;
                 }
@@ -255,11 +310,11 @@ public class StorageDeviceWrapper {
     private void getSpaceInfo(String path, long cap, long used, long free){
         StatFs fs=new StatFs(path);
         long blockSize, totalBlock, availableBlocks;
-        if(Build.VERSION.SDK_INT>=18){//Android 4.3
+        if(Build.VERSION.SDK_INT>=18){//Android 4.3以上
             blockSize=fs.getBlockSizeLong();
             totalBlock=fs.getBlockCountLong();
             availableBlocks=fs.getAvailableBlocksLong();
-        }else{
+        }else{//Android4.3以下
             blockSize=fs.getBlockSize();
             totalBlock=fs.getBlockCount();
             availableBlocks=fs.getAvailableBlocks();
@@ -269,23 +324,41 @@ public class StorageDeviceWrapper {
         used=cap-free;
     }
 
+    /**判断当前目录是否为根目录*/
+    public boolean isRootPath(String path){
+        StorageDeviceInfo.StorageDeviceType type=getPathStorageType(path);
+        StorageDeviceInfo info=getStorageDevice(type);
+        if(info==null)return false;
+        return info.getRootPath().equals(path);
+    }
 
     /**判断当前路径的是挂载到那个盘下*/
     public StorageDeviceInfo.StorageDeviceType getPathStorageType(String path){
-        if(path==null || TextUtils.isEmpty(path))return StorageDeviceInfo.StorageDeviceType.UnKnow;
+        StorageDeviceInfo.StorageDeviceType deviceType=StorageDeviceInfo.StorageDeviceType.UnKnow;
+        if(path==null || TextUtils.isEmpty(path))return deviceType;
         Collection<StorageDeviceInfo> infos=mStorageDeviceInfoMap.values();
         Iterator iterator=infos.iterator();
         //storage目录
         while(iterator.hasNext()){
             StorageDeviceInfo s= (StorageDeviceInfo) iterator.next();
             if(path.startsWith(s.getRootPath())){
-                return s.getDeviceType();
+                deviceType = s.getDeviceType();
+                break;
             }
         }
-        //emulated目录
-        if(path.startsWith(System.getenv("EMULATED_STORAGE_TARGET")))return StorageDeviceInfo.StorageDeviceType.ExtrageDevice;
 
-        return StorageDeviceInfo.StorageDeviceType.UnKnow;
+        //emulated目录
+        if(System.getenv().containsKey("EMULATED_STORAGE_TARGET")){
+            if(path.toLowerCase().startsWith(System.getenv("EMULATED_STORAGE_TARGET").toLowerCase()))deviceType = StorageDeviceInfo.StorageDeviceType.ExtrageDevice;
+        }else if(System.getenv().containsKey("ENC_EMULATED_STORAGE_TARGET")){
+            if(path.toLowerCase().startsWith(System.getenv("ENC_EMULATED_STORAGE_TARGET").toLowerCase()))deviceType = StorageDeviceInfo.StorageDeviceType.ExtrageDevice;
+        }else if (System.getenv().containsKey("ANDROID_STORAGE")){
+            if(path.toLowerCase().startsWith((System.getenv("ANDROID_STORAGE")+"/emulated").toLowerCase()))deviceType = StorageDeviceInfo.StorageDeviceType.ExtrageDevice;
+        }
+
+        //Logger.d("path=%s  getPathStorageType=%s", path, deviceType);
+
+        return deviceType;
     }
 
     //API 23 Android 6.0 获取外置SD卡和USB设备的路径,能获取外置和usb设备的路径
@@ -322,7 +395,7 @@ public class StorageDeviceWrapper {
                 boolean usb= (boolean) DiskInfo_IsUsb.invoke(diskInfo);
 
                 File file= (File) VolumeInfo_GetPath.invoke(volumeInfo);
-                System.out.println("diskinfo="+file.getAbsolutePath()+"; is_usb="+usb+";  is_sd="+sd);
+               // Logger.d("diskinfo="+file.getAbsolutePath()+"; is_usb="+usb+";  is_sd="+sd);
 
                 if(isUsb == usb){//usb
                     path=file.getAbsolutePath();
@@ -346,43 +419,6 @@ public class StorageDeviceWrapper {
         return path;
     }
 
-    //获取所有的挂载路径
-    private List<String> getMountPaths(){
-        List<String> mountPaths=new ArrayList<>();
-        try {
-            String storageKey="ANDROID_STORAGE";
-            String storageTagKey="EMULATED_STORAGE_TARGET";
-            Map<String, String> maps=System.getenv();
-            if(maps.containsKey(storageKey) && maps.containsKey(storageTagKey)){
-                //获取android存储设备的挂载目录
-                String stroagePath=maps.get(storageKey);
-                String storageTagPath=maps.get(storageTagKey);
-                //执行df统计指令获取所有的挂载点
-                Process process=new ProcessBuilder().command("df").redirectErrorStream(true).start();
-                process.waitFor();
-                BufferedReader reader=new BufferedReader(new InputStreamReader(process.getInputStream()));
-                while(reader.read()!=-1){
-                    //readline会去掉头部的/,在前面加上被去掉的/
-                    String s="/"+reader.readLine();
-                    if(s.toLowerCase().startsWith(stroagePath.toLowerCase())){
-                        s=s.substring(0, s.indexOf(" "));
-                        if(s.toLowerCase().equals(storageTagPath.toLowerCase()) || mountPaths.contains(s))continue;
-                        //去除重复的路径,去除相同的父目录
-                        System.out.println("add path="+s);
-                        mountPaths.add(s);
-                    }
-
-                }
-                reader.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return mountPaths;
-    }
-
 
     //获取外置SD卡路径 API 12以上 Android 3.1,能获取内置和外置的路径和USB存储设备的路径
     private List<String> getStoragePath12(Context mContext, boolean removeAble) {
@@ -403,14 +439,14 @@ public class StorageDeviceWrapper {
             Method isRemovable = storageVolumeClazz.getMethod("isRemovable");
             Object result = getVolumeList.invoke(mStorageManager);
             final int length = Array.getLength(result);
-            for(int i = 0; i < length; i++) System.out.println("result data="+Array.get(result, i));
+            //for(int i = 0; i < length; i++) System.out.println("result data="+Array.get(result, i));
             for (int i = 0; i < length; i++) {
                 Object storageVolumeElement = Array.get(result, i);
                 String path = (String) getPath.invoke(storageVolumeElement);
                 int id= (int) getStorageId.invoke(storageVolumeElement);
                 boolean removable = (Boolean) isRemovable.invoke(storageVolumeElement);
                 if (removeAble == removable) {
-                    Logger.i("getpath="+path+"; is_extra="+removeAble+" allLen="+length);
+                    //Logger.i("getpath="+path+"; is_extra="+removeAble+" allLen="+length);
                     paths.add(path);
                 }else{
                     paths.add(path);
@@ -428,20 +464,7 @@ public class StorageDeviceWrapper {
         return paths;
     }
 
-    /**设置根目录文件*/
-    public void setStorageRootDocumentFile(StorageDeviceInfo.StorageDeviceType type, Uri uri){
-        DocumentFile documentFile=null;
-        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP)documentFile=DocumentFile.fromTreeUri(FileFactory.getInstance().getContext(), uri);
-        else if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.KITKAT)documentFile=DocumentFile.fromSingleUri(FileFactory.getInstance().getContext(), uri);
-        switch (type){
-            case SecondExtrageDevice:
-                mSecondExtrageRootFile=documentFile;
-                break;
-            case UsbDevice:
-                mUsbDeviceExtrageRootFile=documentFile;
-                break;
-        }
-    }
+
 
 
 

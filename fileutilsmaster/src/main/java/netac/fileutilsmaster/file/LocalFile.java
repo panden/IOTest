@@ -5,6 +5,8 @@ import android.support.v4.provider.DocumentFile;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,7 +61,7 @@ public class LocalFile extends FileCommon {
     }
 
     @Override
-    public String getAbsultPath() {
+    public String getAbsolutePath() {
         return mFile.getAbsolutePath();
     }
 
@@ -121,6 +123,16 @@ public class LocalFile extends FileCommon {
     }
 
     @Override
+    public boolean renameTo(String newName) {
+        return mFile.renameTo(new File(mFile.getParent(), newName));
+    }
+
+    @Override
+    public boolean isRootFile() {
+        return FileFactory.getInstance().getFileWrapper().isRootPath(path);
+    }
+
+    @Override
     public String getParent() {
         return mFile.getParent();
     }
@@ -143,8 +155,18 @@ public class LocalFile extends FileCommon {
     }
 
     @Override
-    public FileInputStream getFIS() throws IOException {
+    public FileCommon getChildFile(String name) {
+        return new LocalFile(mFile.getAbsolutePath()+"/"+name);
+    }
+
+    @Override
+    public FileInputStream getFileInputStream() throws IOException {
         return new FileInputStream(mFile);
+    }
+
+    @Override
+    public FileOutputStream getFileOutputStream() throws FileNotFoundException, IOException {
+        return new FileOutputStream(mFile);
     }
 
     @Override

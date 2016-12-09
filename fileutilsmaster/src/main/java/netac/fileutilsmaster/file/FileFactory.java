@@ -2,10 +2,9 @@ package netac.fileutilsmaster.file;
 
 import android.content.Context;
 import android.os.Build;
-import android.text.TextUtils;
 
-import netac.fileutilsmaster.file.vo.StorageDeviceInfo;
 import netac.fileutilsmaster.file.wrapper.StorageDeviceWrapper;
+import netac.fileutilsmaster.utils.Logger;
 import netac.fileutilsmaster.utils.MasterUtils;
 
 /**
@@ -31,13 +30,11 @@ public class FileFactory {
         return mContext;
     }
 
-    /**获取存储设备的根目录文件*/
-    public FileCommon getRootFile(StorageDeviceInfo.StorageDeviceType type){
-        FileCommon common=null;
-        String path=mFileWrapper.getStorageDevice(type).getRootPath();
-        if(path==null || TextUtils.isEmpty(path))return common;
-        common=createFile(path);
-        return common;
+    public FileCommon createFile(String path, String name){
+        String filePath;
+        if(path.endsWith("/"))filePath=path+name;
+        else filePath=path+"/"+name;
+        return createFile(filePath);
     }
 
     public FileCommon createFile(String path){
@@ -50,7 +47,7 @@ public class FileFactory {
                 fileCommon=getExtrageSecondDeviceFile(path);
                 break;
             case UsbDevice:
-                fileCommon=getExtrageDeviceFile(path);
+                fileCommon=getExtrageSecondDeviceFile(path);
                 break;
             case UnKnow:
                 break;
@@ -64,6 +61,7 @@ public class FileFactory {
 
     //获取手机的文件
     private FileCommon getExtrageDeviceFile(String path){
+        Logger.i("getExtrageDeviceFile path=%s;", path);
         return new LocalFile(path);
     }
 
@@ -78,14 +76,4 @@ public class FileFactory {
         return fileCommon;
     };
 
-    private FileCommon getUsbDeviceFile(String path){
-        FileCommon fileCommon=null;
-        if(Build.VERSION.SDK_INT>=19){//Android 4.4
-            fileCommon=new ExtrageFile(path);
-        }else{
-            fileCommon=new LocalFile(path);
-        }
-
-        return fileCommon;
-    };
 }

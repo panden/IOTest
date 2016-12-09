@@ -6,6 +6,8 @@ import android.support.v4.provider.DocumentFile;
 import android.webkit.MimeTypeMap;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -33,7 +35,7 @@ public abstract class FileCommon {
 
     public abstract String getName();
 
-    public abstract String getAbsultPath();
+    public abstract String getAbsolutePath();
 
     public abstract boolean deleteExists();
 
@@ -55,6 +57,10 @@ public abstract class FileCommon {
 
     public abstract boolean exists();
 
+    public abstract boolean renameTo(String newName);
+
+    public abstract boolean isRootFile();
+
     public abstract String getParent();
 
     public abstract FileCommon getParentFile();
@@ -63,8 +69,12 @@ public abstract class FileCommon {
 
     public abstract boolean hasChildFile(String name);
 
+    public abstract FileCommon getChildFile(String name);
+
     /**获取文件流*/
-    public abstract FileInputStream getFIS() throws IOException;
+    public abstract FileInputStream getFileInputStream() throws FileNotFoundException, IOException;
+
+    public abstract FileOutputStream getFileOutputStream() throws FileNotFoundException, IOException;
 
     public abstract DocumentFile getFile();
 

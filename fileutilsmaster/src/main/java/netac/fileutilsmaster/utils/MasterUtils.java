@@ -8,6 +8,7 @@ import netac.fileutilsmaster.filebroadcast.UsbDeviceBroadcast;
 
 /**
  * Created by siwei.zhao on 2016/9/14.
+ * 库初始化工具类
  */
 public class MasterUtils {
 
@@ -18,6 +19,7 @@ public class MasterUtils {
     /**初始化相关库*/
     public static void initMaster(Application application){
         BroadCastReciverManager.initManager(application);
+        ResourceUtils.initResourece(application);
         sDeviceBroadcast=new DeviceBroadcast();
         sDeviceBroadcast.registerBroadCastReciver();
         sUsbDeviceBroadcast=new UsbDeviceBroadcast();
@@ -38,8 +40,8 @@ public class MasterUtils {
     }
 
     /**是否开启debug*/
-    public static void debug(boolean open, String tag){
-        Logger.debug(tag, open);
+    public static void debug(boolean open){
+        Logger.debug(open);
     }
 
     private MasterUtils(){
