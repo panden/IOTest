@@ -1,6 +1,7 @@
 package netac.fileutilsmaster.file;
 
 import android.graphics.Bitmap;
+import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 
 import java.io.FileInputStream;
@@ -34,6 +35,11 @@ public class CustomFile extends FileCommon{
     @Override
     public List<FileCommon> listFiles(FileFilter filter) {
         return mFile.listFiles(filter);
+    }
+
+    @Override
+    public List<FileCommon> listFiles(@Nullable FileFilter filter, @Nullable BubbleSort sort) {
+        return mFile.listFiles(filter, sort);
     }
 
     @Override

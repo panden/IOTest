@@ -57,7 +57,7 @@ public class FileUtils {
      * @return boolean 名称是否符合规范
      * */
     public static boolean checkFileNameStandard(boolean isFile, String fileName){
-        if(fileName==null || TextUtils.isEmpty(fileName))return false;
+        if(TextUtils.isEmpty(fileName))return false;
         boolean fileCheck=true;
         //检查文件名的格式是否存在
         fileCheck=(isFile && fileName.indexOf(".")>0);

@@ -169,21 +169,39 @@ public class ExtrageFile extends FileCommon {
 
     @Override
     public List<FileCommon> listFiles() {
-        return listFiles(defaultFileFilter);
+        return listFiles(null, null);
     }
 
     @Override
     public List<FileCommon> listFiles(FileFilter filter) {
-        List<FileCommon> files=new ArrayList<FileCommon>();
+        return listFiles(filter, null);
+    }
+
+    @Override
+    public List<FileCommon> listFiles(@Nullable FileFilter filter, @Nullable BubbleSort sort) {
+        List<FileCommon> files=new ArrayList<FileCommon>(), directory=new ArrayList<>(), fileCommons=new ArrayList<>();
         if(mFile==null)return files;
         DocumentFile[] fs=mFile.listFiles();
-        if(fs==null)return files;
+        if(fs==null)return fileCommons;
         for(DocumentFile file : fs){
             FileCommon f=new ExtrageFile(file, getAbsolutePath()+"/"+file.getName());
-            if(filter==null)files.add(f);
-            else if(filter.accept(f))files.add(f);
+            if(filter==null || (filter!=null && filter.accept(f))){
+                if(file.isDirectory()){
+                    directory.add(f);
+                }else if(file.isFile()){
+                    files.add(f);
+                }
+            }
         }
-        return files;
+        //对文件按照指定的规则去进行排序
+        if(sort!=null){
+            directory=sort.sortList(directory);
+            files=sort.sortList(fileCommons);
+        }
+        //默认的排序，目录在前面，文件在后面
+        fileCommons.addAll(directory);
+        fileCommons.addAll(files);
+        return fileCommons;
     }
 
     @Override

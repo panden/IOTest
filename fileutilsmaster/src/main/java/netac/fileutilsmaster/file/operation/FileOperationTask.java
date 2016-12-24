@@ -164,7 +164,6 @@ public class FileOperationTask extends FileOperationTaskCommon {
         Logger.d("excute move=%s", taskInfo.toString());
         @FileTaskInfo.TaskErrorType int errorType=copyFile(taskInfo, isOverried);
         if(errorType==FileTaskInfo.TASK_ERROR_NONE)errorType=deleteFile(taskInfo);
-
         return errorType;
     }
 

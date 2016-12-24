@@ -1,6 +1,7 @@
 package netac.fileutilsmaster.file;
 
 import android.graphics.Bitmap;
+import android.support.annotation.Nullable;
 import android.support.v4.provider.DocumentFile;
 
 import java.io.File;
@@ -36,23 +37,33 @@ public class LocalFile extends FileCommon {
 
     @Override
     public List<FileCommon> listFiles() {
-        List<FileCommon> files=new ArrayList<FileCommon>();
-        File[] fs=mFile.listFiles();
-        if(fs==null)return files;
-        for(File file:fs)files.add(new LocalFile(file));
-        return files;
+        return listFiles(null, null);
     }
 
     @Override
     public List<FileCommon> listFiles(FileFilter filter) {
-        List<FileCommon> files=new ArrayList<FileCommon>();
+        return listFiles(filter, null);
+    }
+
+    @Override
+    public List<FileCommon> listFiles(@Nullable FileFilter filter, @Nullable BubbleSort sort) {
+        List<FileCommon> files=new ArrayList<FileCommon>(), directorys=new ArrayList<>(), fileCommons=new ArrayList<>();
         File[] fs=mFile.listFiles();
-        if(fs==null)return files;
+        if(fs==null)return fileCommons;
         for(File file:fs){
             LocalFile f=new LocalFile(file);
-            if(filter.accept(f))files.add(f);
+            if(filter==null ||(filter!=null && filter.accept(f))){
+                if(file.isDirectory())directorys.add(f);
+                else if(file.isFile())files.add(f);
+            }
         }
-        return files;
+        if(sort!=null){
+            directorys=sort.sortList(directorys);
+            files=sort.sortList(files);
+        }
+        fileCommons.addAll(directorys);
+        fileCommons.addAll(files);
+        return fileCommons;
     }
 
     @Override

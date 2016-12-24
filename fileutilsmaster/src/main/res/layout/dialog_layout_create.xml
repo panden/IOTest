@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/operation_title_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="创建文件(夹)"
+        android:textSize="20sp"
+        android:textColor="#000"/>
+
+    <EditText
+        android:id="@+id/create_name_et"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="left"
+        android:padding="3dp"
+        android:hint="请输入名称"/>
+
+    <LinearLayout
+        android:id="@+id/task_error_ll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_margin="5dp">
+
+        <ImageView
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:scaleType="fitCenter"
+            android:layout_marginRight="5dp"
+            android:src="@drawable/warning"/>
+
+        <TextView
+            android:id="@+id/task_error_tv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textColor="#000"
+            android:ellipsize="end"
+            android:text="创建文件 test.mp4失败"/>
+    </LinearLayout>
+
+</LinearLayout>
