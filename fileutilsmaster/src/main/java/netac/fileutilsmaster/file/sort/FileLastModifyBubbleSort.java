@@ -13,6 +13,6 @@ public class FileLastModifyBubbleSort extends FileCommon.BubbleSort{
     @Override
     protected boolean changeSort(@Nullable FileCommon common1, @Nullable FileCommon common2) {
         if(common1==null || common2==null)return false;
-        return common2.lastModify()>common1.lastModify();
+        return common1.lastModify()<common2.lastModify();
     }
 }

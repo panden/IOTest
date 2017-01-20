@@ -211,7 +211,7 @@ public class StorageDeviceWrapper {
     }
 
     //注销所有
-    private void unRegisterStorageDeviceChangedAll(){
+    private void unRegisterAllStorageDeviceChanged(){
         mChangeListeners.clear();
     }
 

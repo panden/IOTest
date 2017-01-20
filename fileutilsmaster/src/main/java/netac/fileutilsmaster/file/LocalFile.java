@@ -58,8 +58,8 @@ public class LocalFile extends FileCommon {
             }
         }
         if(sort!=null){
-            directorys=sort.sortList(directorys);
-            files=sort.sortList(files);
+            directorys=sort.sortList(directorys);//目录排序
+            files=sort.sortList(files);//文件排序
         }
         fileCommons.addAll(directorys);
         fileCommons.addAll(files);

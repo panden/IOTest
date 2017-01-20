@@ -13,14 +13,14 @@ import netac.fileutilsmaster.R;
  * 删除文件夹的dialog view builder
  */
 
-public class DeletdDialogViewBuilder extends DialogViewBuilder{
+public class DeletedDialogViewBuilder extends DialogViewBuilder{
 
     private View mBaseView;
     public TextView operation_title_tv, operation_name_tv, operation_count_tv, operation_name, operation_progress_tv, task_error_tv;
     public ProgressBar operation_pb;
     public LinearLayout task_error_ll;
 
-    public DeletdDialogViewBuilder(Context context) {
+    public DeletedDialogViewBuilder(Context context) {
         super(context);
     }
 

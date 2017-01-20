@@ -101,7 +101,7 @@ public abstract class FileCommon {
 
         private boolean isReserve=false;//是否是进行反向排序
 
-        /**设置是采用正向还是反向的方式去进行排序*/
+        /**设置是采用反序的方式进行排列，true：反序；false：正序；*/
         public void setReserve(boolean isReserve){
             this.isReserve=isReserve;
         }
@@ -113,6 +113,7 @@ public abstract class FileCommon {
                 for(int j=i; j<sortCommon.size(); j++){
                     FileCommon common1=sortCommon.get(i), common2=sortCommon.get(j);
                     if(changeSort(common1, common2) && !isReserve){
+                        //顺序则需要调换位置，反序则不需要调换位置
                         sortCommon.set(i, common2);
                         sortCommon.set(j, common1);
                     }
@@ -121,7 +122,7 @@ public abstract class FileCommon {
             return sortCommon;
         }
 
-        /**根据给出的文件信息去判断是否要更换common1和common2之间的先后顺序
+        /**根据给出的文件信息去判断是否要更换common1和common2之间的先后顺序，按照顺序排列即可，反序会自动反序排列
          *@param common1 file1;
          *@param common2 file2;
          *@return boolean true，表示需要改变他们之间的先后顺序； false则不需要改变。
